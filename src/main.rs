@@ -1,5 +1,6 @@
 use std::env;
-use std::path::Path;
+use std::path::{Path, PathBuf};
+use std::fs::metadata;
 
 extern crate pgs_files;
 use pgs_files::passwd;
@@ -31,7 +32,7 @@ const IMG_DL_SUFFIX: &'static str = ".img.xz";
 // update_mode = False
 
 // TODO cleanup all the panic!s with something better, more graceful
-fn config_path(){
+fn config_path() -> PathBuf {
     // ypkg config path
     let pwd_entry = match env::var_os("SUDO_UID") {
         Some(ref uid) => {
@@ -42,6 +43,7 @@ fn config_path(){
             passwd::get_entry_by_uid(pwuid.parse::<u32>().unwrap())
         },
         None => {
+            println!("not running in sudo mode...");
             None
         }
     };
@@ -55,12 +57,15 @@ fn config_path(){
     };
 
     println!("{:?}", home_dir);
-
-
+    let conf_path = Path::new(&home_dir).join(".solus").join("packager");
+    match metadata(&conf_path) {
+        Ok(_) => conf_path,
+        Err(_) => Path::new(&home_dir).join(".solus").join("packager")
+    }
 }
 
 fn main() {
     println!("Hello, world!");
 
-    config_path();
+    println!("{:?}", config_path());
 }
